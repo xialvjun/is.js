@@ -1,4 +1,9 @@
-import { get_path, set_path, deep_flatten, to_string } from "@xialvjun/js-utils";
+import {
+  get_path,
+  set_path,
+  deep_flatten,
+  to_string
+} from "@xialvjun/js-utils";
 
 interface Validation {
   input;
@@ -30,27 +35,25 @@ export const pipe = (validates: ValidateGroup): Validate => input => {
 };
 
 export const is = {
-  optional: (validates: ValidateGroup): Validate => input => {
+  // optional 可以设置默认值
+  optional: (
+    validates: ValidateGroup,
+    default_value,
+    default_generator
+  ): Validate => input => {
     if (
       [undefined, null, "", 0].indexOf(input) > -1 ||
       (to_string(input) === "[object Array]" && input.length === 0)
     ) {
-      return { input, output: input, error: null, is_valid: true };
+      let output = default_generator
+        ? default_generator()
+        : typeof default_value !== "undefined"
+        ? default_value
+        : input;
+      return { input, output, error: null, is_valid: true };
     }
     const validate = pipe(validates);
     return validate(input);
-  },
-  default: (default_value, default_generator): Validate => input => {
-    let output = input,
-      error = null,
-      is_valid = true;
-    if (
-      [undefined, null, "", 0].indexOf(input) > -1 ||
-      (to_string(input) === "[object Array]" && input.length === 0)
-    ) {
-      output = default_generator ? default_generator() : default_value;
-    }
-    return { input, output, error, is_valid };
   },
   object: (
     schema: { [name: string]: ValidateGroup },
@@ -127,6 +130,12 @@ export const is = {
     input.length === len
       ? { input, output: input, error: null, is_valid: true }
       : { input, output: "", error, is_valid: false },
+  match_regex: (regex, error): Validate => input => {
+    if (input.match(regex)) {
+      return { input, output: input, error: null, is_valid: true };
+    }
+    return { input, output: "", error, is_valid: false };
+  },
   gt: (min, error): Validate => input =>
     input > min
       ? { input, output: input, error: null, is_valid: true }
@@ -167,7 +176,9 @@ export const is = {
       }
     }
     return { input, output: null, error: message, is_valid: false };
-  }
+  },
+  // // not that base validator
+  mobile_d11: (error): Validate => pipe([is.string(error), is.match_regex(/\d{11}/g, error)])
 };
 
 // const is_person = is.object({
