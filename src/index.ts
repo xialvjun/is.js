@@ -5,20 +5,20 @@ import {
   to_string
 } from "@xialvjun/js-utils";
 
-interface Validation {
+export interface Validation {
   input;
   output;
   error;
   is_valid: boolean;
 }
 
-interface Validate {
+export interface Validate {
   (input): Validation;
 }
 
-interface Validates extends Array<Validate | Validates> {}
+export interface Validates extends Array<Validate | Validates> {}
 
-type ValidateGroup = Validate | Validates;
+export type ValidateGroup = Validate | Validates;
 
 export const pipe = (validates: ValidateGroup): Validate => input => {
   validates = deep_flatten(validates);
